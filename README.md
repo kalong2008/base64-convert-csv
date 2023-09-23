@@ -13,3 +13,5 @@ the input.csv is the sample csv file
 the program will read input.csv, so make sure the is name as "input.csv"
 
 each row is one base64 data, the csv file do not have header
+
+test the github app of commit and release
