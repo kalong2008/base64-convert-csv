@@ -1,11 +1,10 @@
 use std::env;
 use std::fs::File;
-use std::io::Write;
+use std::io::{BufRead, BufReader, Write};
 use std::path::PathBuf;
 use base64::decode;
 use rand::Rng;
 use chrono::{Local, DateTime, Utc};
-use csv::ReaderBuilder;
 
 fn main() {
     // Get the current working directory
@@ -13,32 +12,54 @@ fn main() {
     .next()
     .map(PathBuf::from)
     .expect("Failed to get executable path.");
-    //println!("executable_path");
-    //println!("{:?}", executable_path);
+
     let executable_dir = executable_path
         .parent()
         .expect("Failed to get executable directory.");
-    //println!("executable_dir");
-    //println!("{:?}", executable_dir);
+
+    // raw csv
+    let raw_file_name = "raw.csv";
+    let raw_file_path = executable_dir.join(raw_file_name);
+    let raw_file = File::open(raw_file_path).expect("Failed to open CSV file.");
+    let raw_reader = BufReader::new(raw_file);
+    let mut combined_rows = Vec::new();
+    let mut current_row = String::new();
+
+    for line in raw_reader.lines() {
+        let line = line.expect("Failed to read line from raw CSV file.");
+        if line.starts_with("\"{") {
+            // Start of a new person's data
+            if !current_row.is_empty() {
+                combined_rows.push(current_row.clone());
+                current_row.clear();
+            }
+            current_row.push_str(&line[1..]);
+        } else {
+            current_row.push_str(&line);
+        }
+    }
+    combined_rows.push(current_row);
+
     // Specify the CSV file name
-    let file_name = "input.csv"; // Replace with the name of your CSV file
-    //println!("{:?}", file_name);
+    //let file_name = "input.csv"; // Replace with the name of your CSV file
+
     // Construct the file path
-    let file_path = executable_dir.join(file_name);
-    //println!("{:?}", file_path);
-    let file = File::open(file_path).expect("Failed to open CSV file.");
-    let mut csv_reader = ReaderBuilder::new()
-        .delimiter(b'\t') // Replace with the delimiter used in your CSV file
-        .has_headers(false)
-        .from_reader(file);
+    //let file_path = executable_dir.join(file_name);
+
+    //let file = File::open(file_path).expect("Failed to open CSV file.");
+    //let mut csv_reader = ReaderBuilder::new()
+    //    .delimiter(b'\t') // Replace with the delimiter used in your CSV file
+    //    .has_headers(false)
+    //    .from_reader(file);
 
     // Iterate over each row in the CSV file
-    for result in csv_reader.records() {
+    //for result in csv_reader.records() {
+    for result in &combined_rows {
         // Read the Base64 string from the CSV row
-        let record = result.expect("Failed to read CSV record.");
-        let base64_string = record.get(0).unwrap_or_else(|| {
-            panic!("Invalid Base64 string in CSV file.");
-        });
+        //let record = result.expect("Failed to read CSV record.");
+        let base64_string_replace = result.replace("\"", "");
+        let base64_string = &base64_string_replace[9..&base64_string_replace.len()-1];
+        //println!("{:?}", base64_string);
 
         // Skip empty cells
         if base64_string.trim().is_empty() {
@@ -53,6 +74,7 @@ fn main() {
                 continue;
             }
         };
+        println!("{:?}", base64_data);
 
         // Decode the Base64 string
         let decoded_data = match decode(base64_data) {

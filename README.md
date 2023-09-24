@@ -8,10 +8,14 @@ it will not work when run ./base64-convert-csv
 
 it will also not work when run in visual studio code
 
-the input.csv is the sample csv file
+the raw.csv is the sample csv file
 
-the program will read input.csv, so make sure the is name as "input.csv"
+the program will read raw.csv, so make sure the is name as "raw.csv"
 
-each row is one base64 data, the csv file do not have header
+please download the file from the google sheet (sheet3) as csv, then rename to "raw.csv"
 
-test the github app of commit and release
+since each cell will have maximum length, cannot store all of the base64 string, therefore, the base64 string will split into several row. 
+
+the rust will combine the each base64 into one row, then convert it to wav
+
+the csv file do not have header, and only have one column
