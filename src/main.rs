@@ -4,7 +4,14 @@ use std::io::{BufRead, BufReader, Write};
 use std::path::PathBuf;
 use base64::decode;
 use rand::Rng;
-use chrono::{Local, DateTime, Utc};
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Deserialize, Serialize)]
+struct Record_data {
+    dataurl: String,
+    selectSplide: String,
+    currentDate: String
+}
 
 fn main() {
     // Get the current working directory
@@ -20,6 +27,7 @@ fn main() {
     // raw csv
     let raw_file_name = "raw.csv";
     let raw_file_path = executable_dir.join(raw_file_name);
+    //let raw_file = File::open(raw_file_name).expect("Failed to open CSV file.");
     let raw_file = File::open(raw_file_path).expect("Failed to open CSV file.");
     let raw_reader = BufReader::new(raw_file);
     let mut combined_rows = Vec::new();
@@ -40,6 +48,20 @@ fn main() {
     }
     combined_rows.push(current_row);
 
+
+
+    //for row in &combined_rows {
+    //    let json: String = format!(r#"{}"#, row);
+    //    let json_replace = json.replace("\"\"", "@@")
+    //        .replace("\"", "")
+    //        .replace("@@", "\"");
+        //print!("{}", json_replace);   
+    //    let person: Person = serde_json::from_str(&json_replace).unwrap();
+    //    print!("{}", person.selectSplide);
+    //    print!("{}", person.currentDate);   
+        
+    //}
+
     // Specify the CSV file name
     //let file_name = "input.csv"; // Replace with the name of your CSV file
 
@@ -57,8 +79,18 @@ fn main() {
     for result in &combined_rows {
         // Read the Base64 string from the CSV row
         //let record = result.expect("Failed to read CSV record.");
-        let base64_string_replace = result.replace("\"", "");
-        let base64_string = &base64_string_replace[9..&base64_string_replace.len()-1];
+        let json: String = format!(r#"{}"#, result);
+        let json_replace = json.replace("\"\"", "@@")
+            .replace("\"", "")
+            .replace("@@", "\"");
+        //print!("{}", json_replace);   
+        let record_data: Record_data = serde_json::from_str(&json_replace).unwrap();
+        print!("{}", record_data.selectSplide);
+        print!("{}", record_data.currentDate);
+
+        //let base64_string_replace = result.replace("\"", "");
+        let base64_string = &record_data.dataurl;
+        //let base64_string = &person.dataurl[9..&person.dataurl.len()-1];
         //println!("{:?}", base64_string);
 
         // Skip empty cells
@@ -74,7 +106,7 @@ fn main() {
                 continue;
             }
         };
-        println!("{:?}", base64_data);
+        //println!("{:?}", base64_data); disable for testing
 
         // Decode the Base64 string
         let decoded_data = match decode(base64_data) {
@@ -89,11 +121,9 @@ fn main() {
         let mut rng = rand::thread_rng();
         let random_number: u32 = rng.gen();
 
-        // Get the current datetime
-        let current_datetime: DateTime<Utc> = Local::now().into();
-
         // Create the file name
-        let file_name = format!("{}_{}.wav", random_number, current_datetime.format("%Y%m%d%H%M%S"));
+        //let file_name = format!("{}_{}.wav", random_number, current_datetime.format("%Y%m%d%H%M%S"));
+        let file_name = format!("{}_select-{}_{}.wav", record_data.currentDate, record_data.selectSplide, random_number);
 
         // Create a file with the generated file name
         let file_path = executable_dir.join(&file_name);
